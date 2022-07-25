@@ -1,0 +1,103 @@
+package websocket
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/remotecommand"
+)
+
+// Done close terminal session, you must call Done() before close connection.
+func (t *TerminalSession) Done() {
+	close(t.doneCh)
+}
+
+// Close cloes terminal session.
+func (t *TerminalSession) Close() error {
+	return t.conn.Close()
+}
+
+// Next()
+func (t *TerminalSession) Next() *remotecommand.TerminalSize {
+	select {
+	case size := <-t.sizeCh:
+		return &size
+	case <-t.doneCh:
+		return nil
+	}
+}
+
+// Read reads terminal message.
+func (t *TerminalSession) Read(p []byte) (int, error) {
+	_, m, err := t.conn.ReadMessage()
+	if err != nil {
+		log.Error("read message error: ", err)
+	}
+	var msg TerminalMessage
+	if err := json.Unmarshal([]byte(m), &msg); err != nil {
+		log.Error("read message json.Unmarshal error: ", err)
+		return copy(p, END_OF_TRANSMISSION), err
+	}
+
+	switch msg.Op {
+	case "stdin":
+		logrus.Info("stdin operator")
+		return copy(p, msg.Data), nil
+	case "resize":
+		logrus.Info("resize operator")
+		t.sizeCh <- remotecommand.TerminalSize{Width: msg.Cols, Height: msg.Rows}
+		return 0, nil
+	case "ping":
+		logrus.Info("ping operator")
+		return 0, nil
+	default:
+		logrus.Info("others operator")
+		return copy(p, END_OF_TRANSMISSION), fmt.Errorf("unknown message type '%s'", msg.Op)
+	}
+}
+
+// Write writes terminal message.
+func (t *TerminalSession) Write(p []byte) (int, error) {
+	msg, err := json.Marshal(TerminalMessage{
+		Op:   "stdout",
+		Data: string(p),
+	})
+	if err != nil {
+		log.Error("write message json.Marshal error: ", err)
+		return 0, err
+	}
+
+	if err := t.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+		log.Error("write message websocket.WriteMessage error:", err)
+		return 0, err
+	}
+	return len(p), nil
+}
+
+// NewTerminalSession creates a terminal session from http connection.
+func NewTerminalSession(w http.ResponseWriter, r *http.Request, respHeader http.Header) (*TerminalSession, error) {
+	conn, err := upgrader.Upgrade(w, r, respHeader)
+	if err != nil {
+		logrus.Error("upgrade to websocket error: ", err)
+		return nil, err
+	}
+
+	return &TerminalSession{
+		conn:   conn,
+		sizeCh: make(chan remotecommand.TerminalSize),
+		doneCh: make(chan struct{}),
+	}, nil
+}
+
+// NewTerminalSessionWs creates a terminal session from websocket connection
+func NewTerminalSessionWs(conn *websocket.Conn) *TerminalSession {
+	return &TerminalSession{
+		conn:   conn,
+		sizeCh: make(chan remotecommand.TerminalSize),
+		doneCh: make(chan struct{}),
+	}
+}
