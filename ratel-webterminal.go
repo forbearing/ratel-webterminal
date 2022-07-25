@@ -61,7 +61,7 @@ func main() {
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/"))))
 	router.HandleFunc("/terminal", terminal.HandleTerminal)
 	router.HandleFunc("/logs", terminal.HandleLogs)
-	router.HandleFunc("/ws/{namespace}/{pod}/{container}/webshell", terminal.HandleWsTerminal)
+	router.HandleFunc("/ws/{namespace}/{pod}/{container}/shell", terminal.HandleWsTerminal)
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", terminal.HandleWsLogs)
 
 	log.Println("Start ratel-webterminal...")

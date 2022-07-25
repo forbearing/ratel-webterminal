@@ -20,7 +20,7 @@ function connect(){
 		return
 	}
 	console.log(namespace ,pod ,container)
-	url = "ws://"+document.location.host+"/ws/"+namespace+"/"+pod+"/"+container+"/webshell"
+	url = "ws://"+document.location.host+"/ws/"+namespace+"/"+pod+"/"+container+"/shell"
 	console.log(url);
 	let term = new Terminal({
 		"cursorBlink":true,
