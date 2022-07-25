@@ -57,8 +57,6 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 	err = podHandler.Execute(podName, containerName, []string{"bash"}, pty)
 	if err != nil {
 		log.Error("create pod shell error: ", err)
-	}
-	if err != nil {
 		if err = podHandler.Execute(podName, containerName, []string{"sh"}, pty); err != nil {
 			log.Error("create pod shell error: ", err)
 		}
