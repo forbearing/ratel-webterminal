@@ -4,51 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"log"
 	"net"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/remotecommand"
 )
-
-const EndOfTransmission = "\u0004"
-
-// PtyHandler is what remotecommand expects from a pty
-type PtyHandler interface {
-	remotecommand.TerminalSizeQueue
-	//Stdin() io.Reader
-	//Stdout() io.Writer
-	//Stderr() io.Writer
-	io.Reader
-	io.Writer
-}
-
-// TerminalSession implements PtyHandler
-type TerminalSession struct {
-	conn   *websocket.Conn
-	sizeCh chan remotecommand.TerminalSize
-	doneCh chan struct{}
-}
-
-// TerminalMessage is the messaging protocol between ShellController and TerminalSession.
-type TerminalMessage struct {
-	Op   string `json:"op"`
-	Data string `json:"data"`
-	Rows uint16 `json:"rows"`
-	Cols uint16 `json:"cols"`
-}
-
-var upgrader = func() websocket.Upgrader {
-	upgrader := websocket.Upgrader{}
-	upgrader.HandshakeTimeout = time.Second * 2
-	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return true
-	}
-	return upgrader
-}()
 
 // NewTerminalSessionWs create TerminalSession
 func NewTerminalSessionWs(conn *websocket.Conn) *TerminalSession {
@@ -89,18 +51,18 @@ func (t *TerminalSession) Read(p []byte) (int, error) {
 	if err != nil {
 		if errors.Is(err, net.ErrClosed) {
 			log.Println("closed network connection")
-			return copy(p, EndOfTransmission), nil
+			return copy(p, END_OF_TRANSMISSION), nil
 		} else {
 			log.Printf("read message err: %v", err)
-			return copy(p, EndOfTransmission), err
+			return copy(p, END_OF_TRANSMISSION), err
 		}
 		//return copy(p, EndOfTransmission), err
 	}
 	var msg TerminalMessage
 	if err := json.Unmarshal([]byte(message), &msg); err != nil {
-
 		log.Printf("read parse message err: %v", err)
-		return copy(p, EndOfTransmission), err
+		// return 0, nil
+		return copy(p, END_OF_TRANSMISSION), err
 	}
 	switch msg.Op {
 	case "stdin":
@@ -108,12 +70,10 @@ func (t *TerminalSession) Read(p []byte) (int, error) {
 	case "resize":
 		t.sizeCh <- remotecommand.TerminalSize{Width: msg.Cols, Height: msg.Rows}
 		return 0, nil
-	case "ping":
-		return 0, nil
 	default:
 		log.Printf("unknown message type '%s'", msg.Op)
 		// return 0, nil
-		return copy(p, EndOfTransmission), fmt.Errorf("unknown message type '%s'", msg.Op)
+		return copy(p, END_OF_TRANSMISSION), fmt.Errorf("unknown message type '%s'", msg.Op)
 	}
 }
 
@@ -135,7 +95,7 @@ func (t *TerminalSession) Write(p []byte) (int, error) {
 }
 
 // Close close session
-func (t *TerminalSession) Close() {
+func (t *TerminalSession) Close() error {
 	close(t.doneCh)
-	t.conn.Close()
+	return t.conn.Close()
 }
