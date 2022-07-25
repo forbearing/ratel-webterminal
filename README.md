@@ -11,15 +11,19 @@
 
 
 
-### 开启运行
+### 1. 开启运行
 
 go run ratel-webterminal.go
 
-### 打开 webterminal
+### 2. 在 default namespace 下创建一个 pod
+
+`kubectl -n default run nginx --image nginx`
+
+### 3. 打开 webterminal
 
 http://localhost:8080/terminal?namespace=default&pod=nginx&container=nginx
 
-### 查看 pod 日志
+### 4. 查看 pod 日志
 
 http://localhost:8080/logs?namespace=default&pod=nginx&container=nginx
 
