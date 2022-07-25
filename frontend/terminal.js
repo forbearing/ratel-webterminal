@@ -31,28 +31,28 @@ function connect(){
 		term.fit();
 		// term.toggleFullScreen(true);
 		term.on('data', function (data) {
-			msg = {operation: "stdin", data: data}
+			msg = {op: "stdin", data: data}
 			conn.send(JSON.stringify(msg))
 		});
 		term.on('resize', function (size) {
 			console.log("resize: " + size)
-			msg = {operation: "resize", cols: size.cols, rows: rows}
+			msg = {op: "resize", cols: size.cols, rows: rows}
 			conn.send(JSON.stringify(msg))
 		});
 
 		conn = new WebSocket(url);
 		conn.onopen = function(e) {
 			term.write("\r");
-			msg = {operation: "stdin", data: "export TERM=xterm && clear \r"}
+			msg = {op: "stdin", data: "export TERM=xterm && clear \r"}
 			conn.send(JSON.stringify(msg))
 			// term.clear()
 		};
 		conn.onmessage = function(event) {
 			msg = JSON.parse(event.data)
-			if (msg.operation === "stdout") {
+			if (msg.op === "stdout") {
 				term.write(msg.data)
 			} else {
-				console.log("invalid msg operation: "+msg)
+				console.log("invalid msg op: "+msg)
 			}
 		};
 		conn.onclose = function(event) {
