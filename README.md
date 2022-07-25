@@ -22,3 +22,9 @@ http://localhost:8080/terminal?namespace=default&pod=nginx&container=nginx
 ### 查看 pod 日志
 
 http://localhost:8080/logs?namespace=default&pod=nginx&container=nginx
+
+
+
+## TODO
+
+- 通过 pod informer 来监控所有 pod, 通过 lister 来获取 pod 资源,而不是每次通过 RESTClient 来直接访问 kube-apiserver, 减少 kube-apiserver 的压力
