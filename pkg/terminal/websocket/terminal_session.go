@@ -35,7 +35,7 @@ type TerminalSession struct {
 
 // TerminalMessage is the messaging protocol between ShellController and TerminalSession.
 type TerminalMessage struct {
-	Op   string `json:"operation"`
+	Op   string `json:"op"`
 	Data string `json:"data"`
 	Rows uint16 `json:"rows"`
 	Cols uint16 `json:"cols"`
