@@ -15,6 +15,8 @@ type RatelTerminalConf struct {
 	BindAddress    string `mapstructure:"bindAddress"`
 	KubeConfigFile string `mapstructure:"kubeConfigFile"`
 	LogLevel       string `mapstructure:"logLevel"`
+	LogFormat      string `mapstructure:"logFormat"`
+	LogFile        string `mapstructure:"logFile"`
 }
 
 func Init(filename string) error {
