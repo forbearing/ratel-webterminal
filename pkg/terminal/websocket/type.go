@@ -41,3 +41,7 @@ var upgrader = func() websocket.Upgrader {
 	}
 	return upgrader
 }()
+
+type Logger struct {
+	conn *websocket.Conn
+}

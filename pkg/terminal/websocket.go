@@ -3,12 +3,14 @@ package terminal
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/forbearing/k8s/pod"
 	"github.com/forbearing/ratel-webterminal/pkg/args"
 	"github.com/forbearing/ratel-webterminal/pkg/terminal/websocket"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // HandleTerminal handle "/terminal" connections.
@@ -48,7 +50,7 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 		pty.Close()
 	}()
 
-	podHandler, err := pod.New(context.TODO(), args.Holder.GetKubeConfigFile(), "")
+	podHandler, err := pod.New(context.TODO(), args.Holder.GetKubeConfigFile(), namespace)
 	err = podHandler.Execute(podName, containerName, []string{"bash"}, pty)
 	if err != nil {
 		if err = podHandler.Execute(podName, containerName, []string{"sh"}, pty); err != nil {
@@ -58,4 +60,41 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleWebsocketLogs
-func HandleWsLogs(w http.ResponseWriter, r *http.Request) {}
+func HandleWsLogs(w http.ResponseWriter, r *http.Request) {
+	pathParams := mux.Vars(r)
+	namespace = pathParams["namespace"]
+	podName := pathParams["pod"]
+	containerName := pathParams["container"]
+	tailLines, _ := strconv.ParseInt(r.URL.Query().Get("tail"), 10, 64)
+	log.Infof("get pod logs: %s/%s, container: %s, tailLines: %d\n", namespace, podName, containerName, tailLines)
+	log.Info(r.URL)
+
+	writer, err := websocket.NewLogger(w, r, nil)
+	if err != nil {
+		log.Error("websocket.NewLogger error: ", err)
+		return
+	}
+	defer func() {
+		log.Println("close logger session.")
+		writer.Close()
+	}()
+
+	if tailLines == 0 {
+		tailLines = 50
+	}
+	logOptions := pod.LogOptions{
+		PodLogOptions: corev1.PodLogOptions{
+			Follow:    true,
+			TailLines: &tailLines,
+		},
+		Writer: writer,
+	}
+	podHandler, err := pod.New(context.TODO(), args.Holder.GetKubeConfigFile(), namespace)
+	if err != nil {
+		log.Error("get pod handler error")
+		return
+	}
+	if err = podHandler.Log(podName, &logOptions); err != nil {
+		log.Error("get pod log error")
+	}
+}

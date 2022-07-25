@@ -130,7 +130,7 @@ func parseParams(c *gin.Context) {
 // startProcess is cancelled by handleAttach
 // Executed command in the container specified in request and connections it up
 // with the ptyHandler (a session)
-func startProcess(c *gin.Context, k8sclient kubernetes.Interface, cfg *rest.Config, command []string, ptyHandler PtyHandler) error {
+func startProcess(c *gin.Context, k8sclient kubernetes.Interface, cfg *rest.Config, command []string, ptyHandler session.PtyHandler) error {
 	req := k8sclient.CoreV1().RESTClient().Post().
 		Resource("pods").
 		Name(podName).

@@ -1,6 +1,7 @@
 package session
 
 import (
+	"io"
 	"sync"
 
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
@@ -8,6 +9,12 @@ import (
 )
 
 const END_OF_TRANSMISSION = "\u0004"
+
+type PtyHandler interface {
+	io.Reader
+	io.Writer
+	remotecommand.TerminalSizeQueue
+}
 
 // TerminalMessage is the messaging protocol between ShellController and TerminalSession
 //
