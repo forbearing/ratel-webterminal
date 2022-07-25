@@ -2,3 +2,5 @@ port: 8080
 bindAddress: 0.0.0.0
 kubeConfigFile: "./kubeconfig"
 logLevel: "DEBUG"
+logFormat: "text"
+logFile: "/dev/stdout"
