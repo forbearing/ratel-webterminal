@@ -13,7 +13,7 @@
 
 ### 1. 开启运行
 
-go run ratel-webterminal.go
+`go run ratel-webterminal.go --kubeconfig ~/.kube/config`
 
 ### 2. 在 default namespace 下创建一个 pod
 
