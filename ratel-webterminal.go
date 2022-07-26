@@ -40,7 +40,7 @@ func init() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
-	builder := args.NewHolderBuilder()
+	builder := args.NewBuilder()
 	builder.SetPort(*argPort)
 	builder.SetBindAddress(*argBindAddress)
 	builder.SetKubeConfigFile(*argKubeConfigFile)

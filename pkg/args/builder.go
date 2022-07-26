@@ -62,7 +62,7 @@ func (h *holderBuilder) SetLogFile(logFile string) *holderBuilder {
 	return h
 }
 
-// NewHolderBuilder returns singleton instance of holder builder.
-func NewHolderBuilder() *holderBuilder {
+// NewBuilder returns singleton instance of holder builder.
+func NewBuilder() *holderBuilder {
 	return builder
 }
