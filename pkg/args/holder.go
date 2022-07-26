@@ -4,7 +4,7 @@ import (
 	"net"
 )
 
-var Holder = &holder{}
+var ratelHolder = &holder{}
 
 // holder is a structure contains all arguments values passed to ratel-terminal.
 type holder struct {
@@ -17,31 +17,31 @@ type holder struct {
 }
 
 // GetPort returns "--port" argument of ratel-webterminal binary.
-func (h *holder) GetPort() int {
-	return h.port
+func GetPort() int {
+	return ratelHolder.port
 }
 
 // GetBindAddress returns "--bind-address" argument of ratel-webterminal binary.
-func (h *holder) GetBindAddress() net.IP {
-	return h.bindAddress
+func GetBindAddress() net.IP {
+	return ratelHolder.bindAddress
 }
 
 // GetKubeConfigFile returns "--kubeconfig" argument of ratel-webterminal binary.
-func (h *holder) GetKubeConfigFile() string {
-	return h.kubeConfigFile
+func GetKubeConfigFile() string {
+	return ratelHolder.kubeConfigFile
 }
 
 // GetLogLevel returns "--log-level" argument of ratel-webterminal binary.
-func (h *holder) GetLogLevel() string {
-	return h.logLevel
+func GetLogLevel() string {
+	return ratelHolder.logLevel
 }
 
 // GetLogFormat returns "--log-format" argument of ratel-webterminal binary.
-func (h *holder) GetLogFormat() string {
-	return h.logFormat
+func GetLogFormat() string {
+	return ratelHolder.logFormat
 }
 
 // GetLogFile returns "--log-file" argument of ratel-webterminal binary.
-func (h *holder) GetLogFile() string {
-	return h.logFile
+func GetLogFile() string {
+	return ratelHolder.logFile
 }
