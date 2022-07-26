@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 
+	_ "net/http/pprof"
+
 	"github.com/forbearing/ratel-webterminal/pkg/args"
 	"github.com/forbearing/ratel-webterminal/pkg/k8s"
 	"github.com/forbearing/ratel-webterminal/pkg/logger"
@@ -55,7 +57,6 @@ func main() {
 	logger.Init()
 
 	router := mux.NewRouter()
-	//router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/"))))
 	router.HandleFunc("/terminal", websocket.HandleTerminal)
 	router.HandleFunc("/logs", websocket.HandleLogs)
@@ -63,6 +64,7 @@ func main() {
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", websocket.HandleWsLogs)
 	router.HandleFunc("/-/healthy", probe.HandleHealthyProbe)
 	router.HandleFunc("/-/ready", probe.HandleReadyProbe)
+	router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 
 	log.Info("Start ratel-webterminal...")
 	addr := fmt.Sprintf("%s:%d", args.GetBindAddress(), args.GetPort())
