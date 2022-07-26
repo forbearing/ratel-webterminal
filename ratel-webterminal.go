@@ -13,13 +13,12 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
 	argPort           = pflag.Int("port", 8080, "port to listen to for incoming HTTP requests")
 	argBindAddress    = pflag.IP("bind-address", net.IPv4(0, 0, 0, 0), "IP address on which to serve the --port, set to 0.0.0.0 for all interfaces by default")
-	argKubeConfigFile = pflag.String("kubeconfig", clientcmd.RecommendedHomeFile, "path to kubeconfig file with authorization and master location information")
+	argKubeConfigFile = pflag.String("kubeconfig", "", "path to kubeconfig file with authorization and master location information")
 	argLogLevel       = pflag.String("log-level", "INFO", "level of API request logging, should be one of   'ERROR', 'WARNING|WARN', 'INFO', 'DEBUG' or 'TRACE'")
 	argLogFormat      = pflag.String("log-format", "TEXT", "specify log format, should be on of 'TEXT' or 'JSON'")
 	argLogFile        = pflag.String("log-output", "/dev/stdout", "specify log file, default output log to /dev/stdout")
