@@ -33,10 +33,8 @@ func HandleLogs(w http.ResponseWriter, r *http.Request) {
 //    term.write("message"):   将 message 信息写到浏览器上
 //    conn.send():             向 websocket 中写数据
 
-// HandleWsTerminal
-
 // 这里主要有三个数据结构: TerminalMessage, TerminalSession, PtyHandler
-// TerminalMessage 相当于一个协议, 支持支持3种, stdin, stdout, resize
+// TerminalMessage 相当于一个协议, 其 Op 标志位支持支持3种, stdin, stdout, resize
 
 // TerminalSession 包含三个字段: conn, sizeCh, doneCh
 //     conn 就是一个 websocket 连接
@@ -47,24 +45,12 @@ func HandleLogs(w http.ResponseWriter, r *http.Request) {
 //     Read() 用来从 TerminalSession 的 websocket 读取数据, 实现了 io.Reader 接口
 //     Write() 用来从 TerminalSession 的 websocket 写数据, 实现了 io.Writer 接口
 //     Next() 实现了 remotecommand.TerminalSizeQueue 接口
+
 // PtyHandler 是一个接口, 其包含了三个子接口, 分别是: io.Reader, io.Writer, remotecommand.TerminalSizeQueue
 // 所以 TerminalSession 对象实现了 PtyHandler 接口.
 
-// 每一个浏览器终端都会使用一个 TerminalSession
-
-// podHandler.Execute(podName, containerName, []string{"bash"}, pty) 会调用以下这段代码.
-//exec, err := remotecommand.NewSPDYExecutor(h.config, "POST", req.URL())
-//if err != nil {
-//    return err
-//}
-//return exec.Stream(remotecommand.StreamOptions{
-//    Stdin:             pty,
-//    Stdout:            pty,
-//    Stderr:            pty,
-//    TerminalSizeQueue: pty,
-//    Tty:               true,
-//})
-// 如何理解这段代码:
+//
+// remotecommand 包
 // 1.remotecommand.NewSPDYExecutor 会与 pod 容器建立连接,并将连接升级到一个多路复用流连接.
 // 2.exec.Stream(remotecommand.StreamOptions{}) 会建立一个标准的 shell streams, 并设置
 //   容器的 stdin, stdout, stderr
@@ -75,7 +61,7 @@ func HandleLogs(w http.ResponseWriter, r *http.Request) {
 //   然后前端 TypeScript 代码会读取 websocket, 将 pod 容器的输出反映到浏览器 web terminal 上.
 
 // pod 容器输出:
-// 1.remotecommand.NewSPDYExecutor() 函数创建一个 Executor, 将会和 pod 容器连理一个多路复用的双向流连接.
+// 1.remotecommand.NewSPDYExecutor() 函数创建一个 Executor, 将会和 pod 容器建立一个多路复用的双向 shell streams 长连接.
 // 2.remotecommand 调用 Executor.Stream 方法来初始化 pod 容器的 stdin, stdout, stderr.
 //   这里是用一个 TerminalSession 对象来初始化 pod 容器的 stdin, stdout, stderr.
 // 3.pod 容器的任何输出, 都会被 remotecommand 调用 TerminalSession 对象的 Write 方法
@@ -106,28 +92,97 @@ func HandleLogs(w http.ResponseWriter, r *http.Request) {
 //   建立的长连接中,并且将 Op 标志设置为 "resize", remotecommand 就会调整容器
 //   terminal 的大小.
 //   具体 TypeScript 代码为 ./frontend/terminal.js 的 38,39 行代码.
+//
+//
+//
+//
 
+// 1.HandleWsTerminal 处理 API "/ws/{namespace}/{pod}/{container}/shell"
+// 2.前端 TypeScript 代码将用户在浏览器输入的 uri, 例如 http://localhost:8080/terminal?namespace=default&pod=nginx&container=nginx
+//   转换成 ws://localhost:8080/ws/{namespace}/{pod}/{container}/shell 格式.
+//   (具体 TypeScript 代码见 ./frontend/terminal.js 的 23 行)
+//   然后访问 ratel-webterminal 的 API "/ws/{namespace}/{pod}/{container}/shell"
+
+// 3.通过 mux.Vars(r) 方法可以分析 URI 的参数, 分别获得 namespace, podName, containerName
+// 4.调用 NewTerminalSession() 函数可以获得一个 TerminalSession 对象, 该对象实现了
+//   PtyHandler 接口, 同时该对象内部维护了一个 websocket, NewTerminalSession() 函数
+//   可以将 http 连接升级成  websocket 连接.
+// 5.前端 TypeScript 代码会将用户在浏览器 web terminal 中输入的 shell 命令写入
+//   TerminalSession 内部维护的 websocket 连接中
+// 6.podHandler.Execute 会通过 remotecommand 包的 NewSPDYExecutor() 函数获得一个 Executor
+//   来和 pod 容器建立一个多路复用的双向的  shell streams 长连接.
+//   podHandler.Executor 会调用 Executor.Stream() 函数来为 pod 容器设置 stdin, stdout, stderr.
+//
 func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
+	// 通过 mux.Vars(r) 函数可以分析 URI "/ws/{namespace}/{pod}/{container}/shell"
+	// 来获取 namespace, podName, containerName.
 	pathParams := mux.Vars(r)
 	namespace := pathParams["namespace"]
 	podName := pathParams["pod"]
 	containerName := pathParams["container"]
 	log.Infof("exec pod: %s/%s, container: %s", namespace, podName, containerName)
 
-	pty, err := NewTerminalSession(w, r, nil)
+	// 调用 NewTerminalSession() 函数可以获得一个 TerminalSession 对象.
+	// 该对象实现了 PtyHandler 接口, 同时该对象内部维护了一个 websocket.
+	// NewTerminalSession() 会自动将 http 连接升级为 websocket 连接.
+
+	// 后续用户在浏览器 web 终端上输入或者复制的 shell 命令会通过
+	// 前端 TypeScript 代码写入到  TerminalSession 内部维护的 websocket 中,
+	// 例如 TypeScript 代码 ./frontend/terminal.js 的 35,40,47 行.
+
+	// 后续 pod 容器的输出内容会被写入到 TerminalSession 内部维护的 websocket 中,
+	// 前端 TypeScript 代码会从该 websocket 读取数据并写入到浏览器的web 终端上.
+	// 例如 TypeScript 代码 ./frontend/terminal.js 的 53 行.
+	terminalSession, err := NewTerminalSession(w, r, nil)
 	if err != nil {
 		log.Error("create terminal session error: ", err)
 		return
 	}
+
+	// terminalSession.Close() 会关闭 TerminalSession 对象内部维护的 websocket 连接,
+	// 同时也会关闭 remotecommand 包与 pod 容器建立的双向的 shell streams 长连接.
 	defer func() {
 		log.Info("close terminal session")
-		pty.Close()
+		terminalSession.Close()
 	}()
 
+	// podHandler.Execute() 底层会调用 remotecommand 包的 NewSPDYExecutor() 函数
+	// 获得一个 Executor 来和 pod 容器建立双向的 shell streams 长连接.
+	// 然后 podHandler.Execute() 再次调用 Executor.Stream() 方法来将 terminalSession
+	// 设置 pod 容器的 stdin, stdout, stderr.
+
+	// terminalSession 对象其中的三个方法是:
+	//     Read() 实现了 io.Reader 接口
+	//     Write() 实现了 io.Writer 接口
+	//     Next() 实现了 remotecommand.TerminalSizeQueue 接口
+
+	// 最后的效果如下:
+	// 1. remotecommand 包会调用 TerminalSession 对象的 Read() 方法来从其内部的 websocket
+	//    读取数据, 用来作为 pod 容器的 stdin, 即用户在浏览器 web 终端上输入的 shell 指令
+	//    会被 remotecommand 包调用 TerminalSession 的 Read() 方法作为 pod 容器的 stdin.
+	// 2. remotecommand 包会调用 terminalSession 对象的 Write() 方法将 pod 容器的
+	//    任何 stdout, stderr 输出写入到 TerminalSession 内部维护的 websocket 中.
+	//    前端 TypeScript 会从该 websocket 读取 pod 容器的输出内容并写入到浏览器 web 终端
+	//    最终用户看到自己 shell 命令的输出结果.
+	// 3. remotecommand 包会循环调用 TerminalSession 对象的 Next() 方法,
+	//    如果从 sizeCh 通道中获取到数据, 说明前端 TypeScript 代码发来了浏览器长宽
+	//    新调整后的大小, remotecommand 包就会相应调整 pod 容器的 terminal 大小.
+	//    如果从 doneCh 获得数据, 说明用户刷新了浏览器或者其他网络原因, 通信结束,
+	//    将会关闭 TerminalSession 内部维护的 websocket 和 remotecommand 包与 pod 容器
+	//    建立的双向的 shell streams 长连接.
+
+	// 用户输入 shell 命令并获得命令输出结果的流程
+	// 1. 用户在浏览器 web 终端输入 shell 命令
+	// 2. 前端 TypeScript 代码将 shell 命令写入到 websocket
+	// 3. 从 websocket 读取数据获得 shell 命令作为 pod 容器的 stdin
+	// 4. pod 容器的输出结果写入 websocket
+	// 5. 前端 TypeScript 代码从 websocket 读取数据并写入到浏览器 web 终端
+	// 6. 最终用户看到自己的 shell 命令输出结果.
 	podHandler, err := pod.New(context.TODO(), args.GetKubeConfigFile(), namespace)
-	err = podHandler.Execute(podName, containerName, []string{"bash"}, pty)
+	err = podHandler.Execute(podName, containerName, []string{"bash"}, terminalSession)
 	if err != nil {
-		if err = podHandler.Execute(podName, containerName, []string{"sh"}, pty); err != nil {
+		// 如果获取 pod 容器的 bash 失败, 尝试获取 pod 容器的 sh.
+		if err = podHandler.Execute(podName, containerName, []string{"sh"}, terminalSession); err != nil {
 			log.Error("create pod shell error: ", err)
 		}
 	}
