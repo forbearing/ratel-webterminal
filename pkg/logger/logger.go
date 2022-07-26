@@ -12,9 +12,9 @@ import (
 func New() *logrus.Logger {
 	logger := logrus.New()
 
-	logLevel := args.Holder.GetLogLevel()
-	logFormat := args.Holder.GetLogFormat()
-	logFile := args.Holder.GetLogFile()
+	logLevel := args.GetLogLevel()
+	logFormat := args.GetLogFormat()
+	logFile := args.GetLogFile()
 	fmt.Println(logLevel)
 	fmt.Println(logFormat)
 	fmt.Println(logFile)
