@@ -9,7 +9,7 @@ import (
 	"github.com/forbearing/ratel-webterminal/pkg/args"
 	"github.com/forbearing/ratel-webterminal/pkg/k8s"
 	"github.com/forbearing/ratel-webterminal/pkg/logger"
-	"github.com/forbearing/ratel-webterminal/pkg/terminal/probe"
+	"github.com/forbearing/ratel-webterminal/pkg/probe"
 	"github.com/forbearing/ratel-webterminal/pkg/terminal/websocket"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
