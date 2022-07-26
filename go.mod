@@ -3,7 +3,7 @@ module github.com/forbearing/ratel-webterminal
 go 1.18
 
 require (
-	github.com/forbearing/k8s v0.4.4
+	github.com/forbearing/k8s v0.4.5
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/gin-gonic/gin v1.8.1
 	github.com/gorilla/mux v1.8.0
@@ -15,6 +15,7 @@ require (
 	k8s.io/api v0.24.3
 	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v0.24.3
+	k8s.io/klog v1.0.0
 )
 
 require (
@@ -30,6 +31,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
