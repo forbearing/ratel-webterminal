@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 
 	"github.com/forbearing/ratel-webterminal/pkg/args"
 	"github.com/forbearing/ratel-webterminal/pkg/k8s"
+	"github.com/forbearing/ratel-webterminal/pkg/logger"
 	"github.com/forbearing/ratel-webterminal/pkg/terminal/websocket"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -51,6 +52,7 @@ func init() {
 
 func main() {
 	k8s.Init()
+	logger.Init()
 
 	ip := args.GetBindAddress()
 	port := args.GetPort()
