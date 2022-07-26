@@ -9,7 +9,7 @@ import (
 
 	"github.com/forbearing/ratel-webterminal/pkg/args"
 	"github.com/forbearing/ratel-webterminal/pkg/k8s"
-	"github.com/forbearing/ratel-webterminal/pkg/terminal"
+	"github.com/forbearing/ratel-webterminal/pkg/terminal/websocket"
 	"github.com/gorilla/mux"
 	"github.com/spf13/pflag"
 	"k8s.io/client-go/tools/clientcmd"
@@ -59,10 +59,10 @@ func main() {
 	router := mux.NewRouter()
 	//router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/"))))
-	router.HandleFunc("/terminal", terminal.HandleTerminal)
-	router.HandleFunc("/logs", terminal.HandleLogs)
-	router.HandleFunc("/ws/{namespace}/{pod}/{container}/shell", terminal.HandleWsTerminal)
-	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", terminal.HandleWsLogs)
+	router.HandleFunc("/terminal", websocket.HandleTerminal)
+	router.HandleFunc("/logs", websocket.HandleLogs)
+	router.HandleFunc("/ws/{namespace}/{pod}/{container}/shell", websocket.HandleWsTerminal)
+	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", websocket.HandleWsLogs)
 
 	log.Println("Start ratel-webterminal...")
 	if err := http.ListenAndServe(addr, router); err != nil {

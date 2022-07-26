@@ -1,4 +1,4 @@
-package terminal
+package websocket
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/forbearing/k8s/pod"
 	"github.com/forbearing/ratel-webterminal/pkg/args"
-	"github.com/forbearing/ratel-webterminal/pkg/terminal/websocket"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -40,7 +39,7 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 	log.Infof("exec pod: %s/%s, container: %s", namespace, podName, containerName)
 	log.Info(r.URL)
 
-	pty, err := websocket.NewTerminalSession(w, r, nil)
+	pty, err := NewTerminalSession(w, r, nil)
 	if err != nil {
 		log.Error("create terminal session error: ", err)
 		return
@@ -62,14 +61,14 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 // HandleWebsocketLogs
 func HandleWsLogs(w http.ResponseWriter, r *http.Request) {
 	pathParams := mux.Vars(r)
-	namespace = pathParams["namespace"]
+	namespace := pathParams["namespace"]
 	podName := pathParams["pod"]
 	containerName := pathParams["container"]
 	tailLines, _ := strconv.ParseInt(r.URL.Query().Get("tail"), 10, 64)
 	log.Infof("get pod logs: %s/%s, container: %s, tailLines: %d\n", namespace, podName, containerName, tailLines)
 	log.Info(r.URL)
 
-	writer, err := websocket.NewLogger(w, r, nil)
+	writer, err := NewLogger(w, r, nil)
 	if err != nil {
 		log.Error("websocket.NewLogger error: ", err)
 		return
