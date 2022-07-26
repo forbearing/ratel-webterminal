@@ -9,7 +9,7 @@ import (
 	"github.com/forbearing/ratel-webterminal/pkg/args"
 	"github.com/forbearing/ratel-webterminal/pkg/k8s"
 	"github.com/forbearing/ratel-webterminal/pkg/logger"
-	"github.com/forbearing/ratel-webterminal/pkg/terminal"
+	"github.com/forbearing/ratel-webterminal/pkg/terminal/probe"
 	"github.com/forbearing/ratel-webterminal/pkg/terminal/websocket"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -61,8 +61,8 @@ func main() {
 	router.HandleFunc("/logs", websocket.HandleLogs)
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/shell", websocket.HandleWsTerminal)
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", websocket.HandleWsLogs)
-	router.HandleFunc("/-/healthy", terminal.HandleHealthProbe)
-	router.HandleFunc("/-/ready", terminal.HandleReadyProbe)
+	router.HandleFunc("/-/healthy", probe.HandleHealthyProbe)
+	router.HandleFunc("/-/ready", probe.HandleReadyProbe)
 
 	log.Info("Start ratel-webterminal...")
 	addr := fmt.Sprintf("%s:%d", args.GetBindAddress(), args.GetPort())
