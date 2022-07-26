@@ -1,0 +1,99 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ratel
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ratel-webterminal
+  namespace: ratel
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratel-webterminal
+  namespace: ratel
+  labels:
+    app: ratel-webterminal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratel-webterminal
+  template:
+    metadata:
+      labels:
+        app: ratel-webterminal
+    spec:
+      serviceAccount: ratel-webterminal
+      containers:
+      - name: ratel-webterminal
+        image: hybfkuf/ratel-webterminal:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          successThreshold: 1
+          failureThreshold: 30
+          timeoutSeconds: 3
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          successThreshold: 1
+          failureThreshold: 30
+          timeoutSeconds: 3
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratel-webterminal
+  namespace: ratel
+  labels:
+    app: ratel-webterminal
+spec:
+  selector:
+    app: ratel-webterminal
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+  type: LoadBalancer
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ratel-webterminal
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/exec"]
+  verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ratel-webterminal
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ratel-webterminal
+subjects:
+- apiGroup: ""
+  kind: ServiceAccount
+  name: ratel-webterminal
+  namespace: ratel
