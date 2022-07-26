@@ -54,10 +54,6 @@ func main() {
 	k8s.Init()
 	logger.Init()
 
-	ip := args.GetBindAddress()
-	port := args.GetPort()
-	addr := fmt.Sprintf("%s:%d", ip, port)
-
 	router := mux.NewRouter()
 	//router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/"))))
@@ -67,6 +63,7 @@ func main() {
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", websocket.HandleWsLogs)
 
 	log.Println("Start ratel-webterminal...")
+	addr := fmt.Sprintf("%s:%d", args.GetBindAddress(), args.GetPort())
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatal(err)
 	}
