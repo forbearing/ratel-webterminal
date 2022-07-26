@@ -61,8 +61,9 @@ func main() {
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/shell", websocket.HandleWsTerminal)
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", websocket.HandleWsLogs)
 
-	log.Println("Start ratel-webterminal...")
+	log.Info("Start ratel-webterminal...")
 	addr := fmt.Sprintf("%s:%d", args.GetBindAddress(), args.GetPort())
+	log.Infof("Listen on %v:%d\n", args.GetBindAddress(), args.GetPort())
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatal(err)
 	}
