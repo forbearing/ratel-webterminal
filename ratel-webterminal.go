@@ -61,7 +61,7 @@ func main() {
 	router.HandleFunc("/logs", websocket.HandleLogs)
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/shell", websocket.HandleWsTerminal)
 	router.HandleFunc("/ws/{namespace}/{pod}/{container}/logs", websocket.HandleWsLogs)
-	router.HandleFunc("/-/health", terminal.HandleHealthProbe)
+	router.HandleFunc("/-/healthy", terminal.HandleHealthProbe)
 	router.HandleFunc("/-/ready", terminal.HandleReadyProbe)
 
 	log.Info("Start ratel-webterminal...")
