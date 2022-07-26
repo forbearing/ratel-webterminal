@@ -52,8 +52,8 @@ func init() {
 func main() {
 	k8s.Init()
 
-	ip := args.Holder.GetBindAddress()
-	port := args.Holder.GetPort()
+	ip := args.GetBindAddress()
+	port := args.GetPort()
 	addr := fmt.Sprintf("%s:%d", ip, port)
 
 	router := mux.NewRouter()

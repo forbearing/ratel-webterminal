@@ -28,7 +28,7 @@ var (
 func Init() {
 	var err error
 
-	kubeconfig := args.Holder.GetKubeConfigFile()
+	kubeconfig := args.GetKubeConfigFile()
 
 	// creates rest config
 	if len(kubeconfig) != 0 {

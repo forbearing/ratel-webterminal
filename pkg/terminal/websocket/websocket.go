@@ -49,7 +49,7 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 		pty.Close()
 	}()
 
-	podHandler, err := pod.New(context.TODO(), args.Holder.GetKubeConfigFile(), namespace)
+	podHandler, err := pod.New(context.TODO(), args.GetKubeConfigFile(), namespace)
 	err = podHandler.Execute(podName, containerName, []string{"bash"}, pty)
 	if err != nil {
 		if err = podHandler.Execute(podName, containerName, []string{"sh"}, pty); err != nil {
@@ -88,7 +88,7 @@ func HandleWsLogs(w http.ResponseWriter, r *http.Request) {
 		},
 		Writer: writer,
 	}
-	podHandler, err := pod.New(context.TODO(), args.Holder.GetKubeConfigFile(), namespace)
+	podHandler, err := pod.New(context.TODO(), args.GetKubeConfigFile(), namespace)
 	if err != nil {
 		log.Error("get pod handler error")
 		return
