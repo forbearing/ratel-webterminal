@@ -1,10 +1,10 @@
-package terminal
+package probe
 
 import "net/http"
 
-// HandleHealthProbe handle api "/-/health"
+// HandleHealthyProbe handle api "/-/health"
 // it alwasy response wth 200 status code and message "ok" if the ratel-webterminal is running.
-func HandleHealthProbe(w http.ResponseWriter, r *http.Request) {
+func HandleHealthyProbe(w http.ResponseWriter, r *http.Request) {
 	// you should alwasy call w.WriteHeader before anything else it will output
 	// some unexpected message like "http: superfluous response.WriteHeader call from github.com...."
 	w.WriteHeader(http.StatusOK)
