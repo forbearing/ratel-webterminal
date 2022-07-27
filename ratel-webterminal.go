@@ -66,7 +66,7 @@ func main() {
 	router.HandleFunc("/-/ready", probe.HandleReadyProbe)
 	router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 
-	log.Info("Start ratel-webterminal...")
+	log.Info("Starting ratel-webterminal")
 	addr := fmt.Sprintf("%s:%d", args.GetBindAddress(), args.GetPort())
 	log.Infof("Listen on %v:%d", args.GetBindAddress(), args.GetPort())
 	if err := http.ListenAndServe(addr, router); err != nil {
