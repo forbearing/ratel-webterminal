@@ -85,7 +85,6 @@ func (t *TerminalSession) Read(p []byte) (int, error) {
 	var msg TerminalMessage
 	if err := json.Unmarshal([]byte(message), &msg); err != nil {
 		log.Printf("read parse message err: %v", err)
-		// return 0, nil
 		return copy(p, END_OF_TRANSMISSION), err
 	}
 	switch msg.Op {
@@ -96,7 +95,6 @@ func (t *TerminalSession) Read(p []byte) (int, error) {
 		return 0, nil
 	default:
 		log.Printf("unknown message type '%s'", msg.Op)
-		// return 0, nil
 		return copy(p, END_OF_TRANSMISSION), fmt.Errorf("unknown message type '%s'", msg.Op)
 	}
 }
