@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/forbearing/ratel-webterminal/pkg/args"
+	"github.com/forbearing/ratel-webterminal/pkg/controller"
 	"github.com/forbearing/ratel-webterminal/pkg/k8s"
 	"github.com/forbearing/ratel-webterminal/pkg/logger"
 	"github.com/forbearing/ratel-webterminal/pkg/probe"
@@ -53,8 +54,9 @@ func init() {
 }
 
 func main() {
-	k8s.Init()
 	logger.Init()
+	k8s.Init()
+	controller.Init()
 
 	router := mux.NewRouter()
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/"))))
