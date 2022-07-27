@@ -7,6 +7,7 @@ import (
 
 	"github.com/forbearing/k8s/pod"
 	"github.com/forbearing/ratel-webterminal/pkg/args"
+	"github.com/forbearing/ratel-webterminal/pkg/controller"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -96,23 +97,17 @@ func HandleLogs(w http.ResponseWriter, r *http.Request) {
 //
 //
 //
-
-// 1.HandleWsTerminal 处理 API "/ws/{namespace}/{pod}/{container}/shell"
-// 2.前端 TypeScript 代码将用户在浏览器输入的 uri, 例如 http://localhost:8080/terminal?namespace=default&pod=nginx&container=nginx
-//   转换成 ws://localhost:8080/ws/{namespace}/{pod}/{container}/shell 格式.
-//   (具体 TypeScript 代码见 ./frontend/terminal.js 的 23 行)
-//   然后访问 ratel-webterminal 的 API "/ws/{namespace}/{pod}/{container}/shell"
-
-// 3.通过 mux.Vars(r) 方法可以分析 URI 的参数, 分别获得 namespace, podName, containerName
-// 4.调用 NewTerminalSession() 函数可以获得一个 TerminalSession 对象, 该对象实现了
-//   PtyHandler 接口, 同时该对象内部维护了一个 websocket, NewTerminalSession() 函数
-//   可以将 http 连接升级成  websocket 连接.
-// 5.前端 TypeScript 代码会将用户在浏览器 web terminal 中输入的 shell 命令写入
-//   TerminalSession 内部维护的 websocket 连接中
-// 6.podHandler.Execute 会通过 remotecommand 包的 NewSPDYExecutor() 函数获得一个 Executor
-//   来和 pod 容器建立一个多路复用的双向的  shell streams 长连接.
-//   podHandler.Executor 会调用 Executor.Stream() 函数来为 pod 容器设置 stdin, stdout, stderr.
 //
+//
+//
+
+// HandleWsTerminal 处理 API "/ws/{namespace}/{pod}/{container}/shell"
+
+// 前端 TypeScript 代码将用户在浏览器输入的 uri,
+// 例如 http://localhost:8080/terminal?namespace=default&pod=nginx&container=nginx
+// 转换成 ws://localhost:8080/ws/{namespace}/{pod}/{container}/shell 格式.
+// (具体 TypeScript 代码见 ./frontend/terminal.js 的 23 行)
+// 然后访问 ratel-webterminal 的 API "/ws/{namespace}/{pod}/{container}/shell"
 func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 	// 通过 mux.Vars(r) 函数可以分析 URI "/ws/{namespace}/{pod}/{container}/shell"
 	// 来获取 namespace, podName, containerName.
@@ -178,13 +173,26 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 	// 4. pod 容器的输出结果写入 websocket
 	// 5. 前端 TypeScript 代码从 websocket 读取数据并写入到浏览器 web 终端
 	// 6. 最终用户看到自己的 shell 命令输出结果.
+
 	podHandler, err := pod.New(context.TODO(), args.GetKubeConfigFile(), namespace)
-	err = podHandler.Execute(podName, containerName, []string{"bash"}, terminalSession)
-	if err != nil {
-		// 如果获取 pod 容器的 bash 失败, 尝试获取 pod 容器的 sh.
-		if err = podHandler.Execute(podName, containerName, []string{"sh"}, terminalSession); err != nil {
-			log.Error("create pod shell error: ", err)
+	processPodShell := func(podName, containerName string) {
+		err = podHandler.Execute(podName, containerName, []string{"bash"}, terminalSession)
+		if err != nil {
+			// 如果获取 pod 容器的 bash 失败, 尝试获取 pod 容器的 sh.
+			if err = podHandler.Execute(podName, containerName, []string{"sh"}, terminalSession); err != nil {
+				log.Error("create pod shell error: ", err)
+			}
 		}
+	}
+
+	// 从 pod lister 中获取 pod 对象,而不是直接访问 kube-apiserver, 可以减轻 apiserver 压力
+	// 如果从 pod lister 中获取不到 pod, 再直接调用 kube-apiserver api 获取 pod
+	podObj, err := controller.GetPod(namespace, podName)
+	if err != nil {
+		log.Warn(err)
+		processPodShell(podName, containerName)
+	} else {
+		processPodShell(podObj.Name, containerName)
 	}
 }
 
