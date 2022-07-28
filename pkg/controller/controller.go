@@ -1,9 +1,8 @@
 package controller
 
 import (
-	"fmt"
-
 	"context"
+	"fmt"
 
 	"github.com/forbearing/k8s/pod"
 	"github.com/forbearing/ratel-webterminal/pkg/args"
