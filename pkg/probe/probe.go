@@ -2,7 +2,7 @@ package probe
 
 import "net/http"
 
-// HandleHealthyProbe handle api "/-/health"
+// HandleHealthyProbe handle api "/-/healthy"
 // it alwasy response wth 200 status code and message "ok" if the ratel-webterminal is running.
 func HandleHealthyProbe(w http.ResponseWriter, r *http.Request) {
 	// you should alwasy call w.WriteHeader before anything else it will output
