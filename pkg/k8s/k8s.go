@@ -34,12 +34,12 @@ func Init() {
 	if len(kubeconfig) != 0 {
 		restConfig, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
-			log.Panic(err)
+			log.Fatal(err)
 		}
 	} else {
 		restConfig, err = rest.InClusterConfig()
 		if err != nil {
-			log.Panic(err)
+			log.Fatal(err)
 		}
 	}
 	restConfig.APIPath = "api"
@@ -49,25 +49,25 @@ func Init() {
 
 	// create a http client for the given config.
 	if httpClient, err = rest.HTTPClientFor(restConfig); err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 
 	// create a RESTClient for the given config and http client.
 	if restClient, err = rest.RESTClientForConfigAndClient(restConfig, httpClient); err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 
 	// create a Clientset for the given config and http client.
 	if clientset, err = kubernetes.NewForConfigAndClient(restConfig, httpClient); err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 	// create a dynamic client for the given config and http client.
 	if dynamicClient, err = dynamic.NewForConfigAndClient(restConfig, httpClient); err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 	// create a DiscoveryClient for the given config and http client.
 	if discoveryClient, err = discovery.NewDiscoveryClientForConfigAndClient(restConfig, httpClient); err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 }
 

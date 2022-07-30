@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	listerscore "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -60,14 +61,14 @@ func (c *controller) run(stopCh <-chan struct{}) error {
 func Init() {
 	podHandler, err := pod.New(context.TODO(), args.GetKubeConfigFile(), "")
 	if err != nil {
-		log.Panicf("Create a pod handler error: %s", err.Error())
+		log.Fatalf("Create a pod handler error: %s", err.Error())
 	}
 
 	podController = newController(podHandler.Informer(), podHandler.Lister())
 	stopCh := make(chan struct{})
 	podHandler.InformerFactory().Start(stopCh)
 	if err := podController.run(stopCh); err != nil {
-		log.Panicf("Error running pod controller: %s", err.Error())
+		log.Fatalf("Error running pod controller: %s", err.Error())
 	}
 }
 
@@ -76,6 +77,7 @@ func Init() {
 // If the pod resource no longer exist in pod lister, it will make this function
 // caller to get pod by calling apiserver API directly.
 func GetPod(namespace, name string) (*corev1.Pod, error) {
+	podController.podLister.List(labels.Nothing())
 	podObj, err := podController.podLister.Pods(namespace).Get(name)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
