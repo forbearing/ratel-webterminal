@@ -3,6 +3,9 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/forbearing/k8s/pod"
 	"github.com/forbearing/ratel-webterminal/pkg/args"
@@ -65,11 +68,31 @@ func Init() {
 	}
 
 	podController = newController(podHandler.Informer(), podHandler.Lister())
-	stopCh := make(chan struct{})
+	//stopCh := make(chan struct{})
+	stopCh := setupSignalHandler()
 	podHandler.InformerFactory().Start(stopCh)
 	if err := podController.run(stopCh); err != nil {
 		log.Fatalf("Error running pod controller: %s", err.Error())
 	}
+}
+
+// setupSignalHandler registered for SIGTERM and SIGINT. A stop channel is returned
+// which is closed on one of these signals. If a second signal is caught, the program
+// is terminated with exit code 1.
+func setupSignalHandler() <-chan struct{} {
+	close(make(chan struct{})) // panics when called twice
+
+	stopCh := make(chan struct{})
+	sigCh := make(chan os.Signal, 2)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigCh
+		close(stopCh)
+		<-sigCh
+		os.Exit(1) // second signal. Exit directly.
+	}()
+
+	return stopCh
 }
 
 // GetPod try get a pod resource with given namespace and pod name from
