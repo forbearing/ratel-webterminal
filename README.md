@@ -38,3 +38,4 @@ http://localhost:8080/logs?namespace=default&pod=nginx&container=nginx
 ## TODO
 
 - [x] 通过 pod informer 来监控所有 pod, 通过 pod lister 来获取 pod 资源, 而不是每次通过 RESTClient 来直接访问 kube-apiserver, 减少访问 kube-apiserver 的次数, 减轻 kube-apiserver 的压力.
+- [ ] leader election
