@@ -179,6 +179,7 @@ func HandleWsLogs(w http.ResponseWriter, r *http.Request) {
 	var logOptions pod.LogOptions
 	logOptions.Writer = writer
 	logOptions.Follow = true
+	logOptions.NewLine = false
 	if tailLines != 0 {
 		logOptions.TailLines = &tailLines
 	}
