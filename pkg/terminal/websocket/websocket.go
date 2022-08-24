@@ -103,10 +103,10 @@ func HandleWsTerminal(w http.ResponseWriter, r *http.Request) {
 
 	podHandler, err := pod.New(context.TODO(), args.GetKubeConfigFile(), namespace)
 	processPodShell := func(podName, containerName string) {
-		err = podHandler.Execute(podName, containerName, []string{"bash"}, terminalSession)
+		err = podHandler.ExecuteWithPty(podName, containerName, []string{"bash"}, terminalSession)
 		if err != nil {
 			// 如果获取 pod 容器的 bash 失败, 尝试获取 pod 容器的 sh.
-			if err = podHandler.Execute(podName, containerName, []string{"sh"}, terminalSession); err != nil {
+			if err = podHandler.ExecuteWithPty(podName, containerName, []string{"sh"}, terminalSession); err != nil {
 				log.Error("create pod shell error: ", err)
 			}
 		}
